@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Activités</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .modal {
+            display: none;
+        }
+        .modal.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8 text-center">Nos Activités</h1>
+        
+        <!-- Liste des activités -->
+        <div id="activities-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Les activités seront injectées ici -->
+        </div>
+
+        <!-- Modal pour les détails -->
+        <div id="activity-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4">
+            <div class="bg-white rounded-lg p-6 max-w-2xl w-full">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 id="modal-title" class="text-2xl font-bold"></h2>
+                    <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">✕</button>
+                </div>
+                <div id="modal-content" class="space-y-4">
+                    <!-- Les détails de l'activité seront injectés ici -->
+                </div>
+                <button onclick="closeModal()" class="w-full mt-4 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fonction pour charger toutes les activités
+        async function loadActivities() {
+            try {
+                const response = await fetch('http://localhost:3000/api/activities');
+                const activities = await response.json();
+                const container = document.getElementById('activities-list');
+                
+                container.innerHTML = activities.map(activity => `
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden cursor-pointer transform transition hover:scale-105"
+                         onclick="showActivityDetails('${activity._id}')">
+                        <img src="/api/placeholder/400/200" alt="${activity.titre}" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <h2 class="text-xl font-semibold mb-2">${activity.titre}</h2>
+                            <div class="flex justify-between items-center">
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
+                                    ${activity.type}
+                                </span>
+                                <span class="font-bold text-lg">${activity.cout}€</span>
+                            </div>
+                            <div class="mt-2 text-gray-600">
+                                <p>Date: ${new Date(activity.date).toLocaleDateString()}</p>
+                                <p>Heure: ${activity.heure}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Erreur lors du chargement des activités:', error);
+            }
+        }
+
+        // Fonction pour afficher les détails d'une activité
+        async function showActivityDetails(id) {
+            try {
+                const response = await fetch(`http://localhost:3000/api/activities/${id}`);
+                const activity = await response.json();
+                
+                document.getElementById('modal-title').textContent = activity.titre;
+                document.getElementById('modal-content').innerHTML = `
+                    <img src="/api/placeholder/600/300" alt="${activity.titre}" class="w-full h-64 object-cover rounded-lg">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="font-semibold">Type:</p>
+                            <p class="text-gray-600">${activity.type}</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Coût:</p>
+                            <p class="text-gray-600">${activity.cout}€</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Date:</p>
+                            <p class="text-gray-600">${new Date(activity.date).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Heure:</p>
+                            <p class="text-gray-600">${activity.heure}</p>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('activity-modal').classList.add('active');
+            } catch (error) {
+                console.error('Erreur lors du chargement des détails:', error);
+            }
+        }
+
+        // Fonction pour fermer le modal
+        function closeModal() {
+            document.getElementById('activity-modal').classList.remove('active');
+        }
+
+        // Charger les activités au chargement de la page
+        document.addEventListener('DOMContentLoaded', loadActivities);
+    </script>
+</body>
+</html>
